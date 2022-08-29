@@ -6,9 +6,13 @@ import java.util.List;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 
 public class UpdateDataApiRunable extends Thread {
 	
@@ -19,27 +23,38 @@ public class UpdateDataApiRunable extends Thread {
 	ProgressIndicator progressIndicator;
 	Stage progressStage;
 	private ApiCallerClass apiCaller;
-
+	private int flag = 0;
 	
 	public UpdateDataApiRunable(List<List<String>> titles, int isbnIndex, ProgressIndicator progressIndicator)
-	{		       
+	{		      
+		
 		this.apiCaller = new ApiCallerClass();
 		this.titles = titles;
 		this.isbnIndex = isbnIndex;
 		this.progressIndicator = progressIndicator;
-		this.propertyFileHandler = PropertyFileHandler.getInstance();			
+		this.propertyFileHandler = PropertyFileHandler.getInstance();		
+			
 	}
 	
 	public void setCurrentProgress(int max, int current)
 	{			
 		currentProgress = (float) ((float)current / (float) max);		
+		int flag = this.flag;
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
-				progressIndicator.setProgress(currentProgress);				
+				progressIndicator.setProgress(currentProgress);		
+				
 			}
 		});
-		System.out.println(current + " of " + max + "; " + currentProgress * 100 + "%");				
+		System.out.println(current + " of " + max + "; " + currentProgress * 100 + "%");		
+		if (this.flag == 0)
+		{
+			this.flag = 1;
+		} else
+		{
+			this.flag = 0;
+		}
 	}
 	
 	public void run()
@@ -63,6 +78,8 @@ public class UpdateDataApiRunable extends Thread {
 			setCurrentProgress(titles.size()-1, counter);
 		}
 		setCurrentProgress(1,1);
+
+		
 		return titles;
 	}
 
@@ -130,7 +147,7 @@ public class UpdateDataApiRunable extends Thread {
 				}
 			}
 		}		
-		return("Prüfung nicht möglich");
+		return("PrÃ¼fung nicht mÃ¶glich");
 	}
 	
 }

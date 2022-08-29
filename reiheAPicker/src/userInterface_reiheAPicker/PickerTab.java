@@ -16,6 +16,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -44,7 +45,7 @@ import logic_reiheAPicker.PropertyFileHandler;
 import logic_reiheAPicker.QueueManager;
 import models_reiheAPicker.CustomTextAreaPickerTab;
 import models_reiheAPicker.ListEnum;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 
 public class PickerTab {
 	
@@ -184,18 +185,55 @@ public class PickerTab {
 
 	public PickerTab(Stage primaryStage)
 	{
+		
+		
+		
 		this.primaryStage = primaryStage;
+		
+		this.primaryStage.widthProperty().addListener((observable, oldValue, newValue) -> {			
+			resizeEvent((double) newValue);
+		});
+		this.primaryStage.heightProperty().addListener((observable, oldValue, newValue) -> {			
+			resizeEvent((double) newValue);
+		});		
+		
+		
+		
 		this.pickerTab = new Tab(Constants.ChooserTabName);
 		this.pickerTab.setClosable(false);
 		this.buildStage = 0;
+		
 	}	
+	
+	private void resizeEvent(double newValue)
+	{		
+		/*
+		 * proven to be stupid		
+		 */
+		
+	
+	}
 	
 	private void updateQueueProgress(double number)
 	{
 		this.progressBar.setProgress(number);	
 	}
 	
-
+	
+	
+	public void rebuild(List<String> columnNames, List<List<String>> ntitles, List<List<String>> qtitles, List<List<String>> ptitles) throws InterruptedException {
+		initiateElements();
+		configureElements();
+		this.buildStage = 1;
+		this.queuemanager = new QueueManager(columnNames, ntitles, qtitles, ptitles);
+		this.queuemanager.setNopeIteratorToLast();
+		updateLists();
+		configureEventsGeneral();
+		configureEventsQueue();
+		configureEventsPicks();
+		configureEventsNopes();
+		
+	}
 	
 	public void rebuild(List<List<String>> titles, ProgressIndicator progressIndicator) throws InterruptedException {
 
@@ -203,7 +241,9 @@ public class PickerTab {
 		configureElements();
 		this.buildStage = 1;		
 		
-		this.queuemanager = new QueueManager(titles, progressIndicator);		
+		
+		this.queuemanager = new QueueManager(titles, progressIndicator);	
+		
 		
 		if (!propertyFileHandler.propertyFileModel.get_settings_API_link().isBlank() &&
 				propertyFileHandler.propertyFileModel.get_settings_API_CheckApiAfterImport().equals("true"))
@@ -216,9 +256,13 @@ public class PickerTab {
 				progressIndicator.setVisible(false);	
 			}			
 		});
+		
+		
 
+		this.queuemanager.setNopeIteratorToLast();
 		}	else
 		{
+		this.queuemanager.setNopeIteratorToLast();	
 		updateLists();
 		}		
 		configureEventsGeneral();
@@ -227,19 +271,37 @@ public class PickerTab {
 		configureEventsNopes();
 	}	
 	
-	public void updateFormattedTitles(boolean updatenopes, boolean updatequeue, boolean updatepicks, boolean updateApi)
+	public void updateFormattedTitles(boolean updatenopes, String altNopeTitle, boolean updatequeue,  String altQueueTitle, boolean updatepicks,  String altPickTitle, boolean updateApi)
 	{
 		if (updatenopes)
 		{
+			if (altNopeTitle != null)
+			{
+			this.currentsnopes.setText(altNopeTitle + ": " + queuemanager.fetchFormattedTitle(ListEnum.NOPES, updateApi));
+			} else
+			{
 			this.currentsnopes.setText(queuemanager.fetchFormattedTitle(ListEnum.NOPES, updateApi));	
+		}
 		}
 		if (updatequeue)
 		{
+			if (altQueueTitle != null)
+			{
+				this.currentsqueue.setText(altQueueTitle + ": " + queuemanager.fetchFormattedTitle(ListEnum.QUEUE, updateApi));
+			} else
+			{
 			this.currentsqueue.setText(queuemanager.fetchFormattedTitle(ListEnum.QUEUE, updateApi));
+		}
 		}
 		if (updatepicks)
 		{
-			this.currentspicks.setText(queuemanager.fetchFormattedTitle(ListEnum.PICKS, updateApi));	
+			if (altPickTitle != null)
+			{
+				this.currentspicks.setText(altPickTitle + ": " + queuemanager.fetchFormattedTitle(ListEnum.PICKS, updateApi));
+			} else
+			{
+			this.currentspicks.setText(queuemanager.fetchFormattedTitle(ListEnum.PICKS, updateApi));
+			}
 		}
 	}
 	
@@ -254,7 +316,7 @@ public class PickerTab {
 		updateProgressText(queuemanager.getProgressText());
 		
 		updateQueues(true, true, true);
-		updateFormattedTitles(true, true, false, true);		
+		updateFormattedTitles(true, null, true, null, false, null, true);		
 		 
 		updateFormattedTitle(ListEnum.NOPES);
 		updateFormattedTitle(ListEnum.QUEUE);
@@ -1153,8 +1215,8 @@ public class PickerTab {
 			{
 				Alert alert = new Alert(AlertType.INFORMATION);
 				alert.setTitle("Warnung");
-				alert.setHeaderText("Kein gültiger Exportpfad angegeben. Ihre Daten wurden noch nicht gespeichert.");
-				alert.setContentText("Bitte gehen Sie zu den Importeinstellungen und überprüfen Sie Ihre Eingaben!");
+				alert.setHeaderText("Kein gÃ¼ltiger Exportpfad angegeben. Ihre Daten wurden noch nicht gespeichert.");
+				alert.setContentText("Bitte gehen Sie zu den Importeinstellungen und Ã¼berprÃ¼fen Sie Ihre Eingaben!");
 
 				alert.showAndWait();
 			}
@@ -1177,12 +1239,15 @@ public class PickerTab {
 		this.nextsHBox = new HBox();
 		this.formersHBox = new HBox();
 		this.shortCutHBox = new HBox();
-		
+
 		this.currentsleftVBox = new VBox(200, this.currentsnopes);
 		this.currentsmiddleVBox = new VBox(200, this.currentsqueue);
 		this.currentsrightVBox = new VBox(200, this.currentspicks);
 				
 		this.helpButton = new Button();
+		 Tooltip helpTooltip = new Tooltip();
+		 helpTooltip.setText("KurzeinfÃ¼hrung");
+	     helpButton.setTooltip(helpTooltip);
 		
 		this.textA1 = new Label("");
 		this.textA2 = new Label("");
@@ -1635,6 +1700,7 @@ public class PickerTab {
 		
 		
 		shortCutHBox.setAlignment(Pos.CENTER_LEFT);
+		
 		HBox.setMargin(this.progressBar, new Insets(0,10,0,0));
 	
 
@@ -1662,12 +1728,24 @@ public class PickerTab {
 		this.gridpaneLower.add(this.nextsmiddleVBox, 1, 4);
 		this.gridpaneLower.add(this.nextsrightVBox, 2, 4);
 		
+
+   		
 		ScrollPane scrollPane = new ScrollPane();
 		scrollPane.setFitToHeight(true);
 		scrollPane.setFitToWidth(true);
 		ScrollPane scrollPane2 = new ScrollPane();
 		scrollPane.setContent(this.shortCutHBox);
 		scrollPane2.setContent(this.gridpaneLower);
+		
+		scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // never show a vertical ScrollBar
+	    scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // never show a hor ScrollBar
+	    scrollPane.setFitToWidth(true); // set content width to viewport width
+	    scrollPane.setPannable(true); // allow scrolling via mouse dragging
+	    
+	    scrollPane2.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+	    scrollPane2.setFitToWidth(true); // set content width to viewport width
+	    scrollPane2.setPannable(true); // allow scrolling via mouse dragging
+		
 		this.pickerTab.setContent(new VBox(scrollPane, scrollPane2));		
 		HBox.setHgrow(gridpaneLower, Priority.ALWAYS);
 		
@@ -1684,7 +1762,7 @@ public class PickerTab {
 	            @Override public void handle(ActionEvent e) {
 	            	
 	            	Alert alert = new Alert(AlertType.INFORMATION);
-	            	alert.setTitle("Kurzeinführung:");
+	            	alert.setTitle("KurzeinfÃ¼hrung:");
 	            	alert.setHeaderText(null);
 	            	alert.setContentText(Constants.Kurzeinfuehrung);
 	            	alert.initStyle(StageStyle.UTILITY);
@@ -1701,13 +1779,16 @@ public class PickerTab {
 				GetButtonPics.turnPicIntoImageView(this.ButtonImage_shift), GetButtonPics.turnPicIntoImageView(this.ButtonImage_space), Constants.ShortCutDescription_inhaltstext,new Text("   "), GetButtonPics.turnPicIntoImageView(this.ButtonImage_verticalLine, 35), new Text("   "),
 				GetButtonPics.turnPicIntoImageView(this.ButtonImage_F1),new Text(" bis "), GetButtonPics.turnPicIntoImageView(this.ButtonImage_F4), Constants.ShortCutDescription_titelsuche, GetButtonPics.turnPicIntoImageView(this.ButtonImage_verticalLine, 35), new Text("   "),
 				GetButtonPics.turnPicIntoImageView(this.ButtonImage_backspace), Constants.ShortCutDescription_rueckgaengig, GetButtonPics.turnPicIntoImageView(this.ButtonImage_verticalLine, 35), new Text("   "),
-				GetButtonPics.turnPicIntoImageView(this.ButtonImage_enter), Constants.ShortCutDescription_export, new Text(" "),
+				GetButtonPics.turnPicIntoImageView(this.ButtonImage_enter), Constants.ShortCutDescription_export, GetButtonPics.turnPicIntoImageView(this.ButtonImage_verticalLine, 35), new Text("   "),
+				GetButtonPics.turnPicIntoImageView(this.ButtonImage_shift),GetButtonPics.turnPicIntoImageView(this.ButtonImage_enter), Constants.ShortCutDescription_save, new Text(" "),
 				regionMiddle, this.progressText, new Text(" "), this.progressBar, new Text(" "), this.helpButton, new Text(" ")
 				);		
 		this.shortCutHBox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, CornerRadii.EMPTY, Insets.EMPTY)));
+	
 		
 	
-	   		
+	    
+	    
 	}
 	
 	private void updateProgressText(String text)
@@ -1774,34 +1855,41 @@ public class PickerTab {
 	
 	private void configureEventsGeneral() {
 		
-		this.currentsqueue.setOnScroll(new EventHandler<ScrollEvent>() {
-	        @Override public void handle(ScrollEvent event) {
+		
+		this.currentsqueue.setOnScroll(new EventHandler<ScrollEvent>() {			
+		
+	        @Override public void handle(ScrollEvent event) {	        	
+	        	
 	        	if (event.isShiftDown() && event.getTextDeltaX() > 0)
-	        	{
+	        	{	        		
 	        		queuemanager.formerTitle(ListEnum.QUEUE);
 			 		updateQueues(false, true, false);
-			 		updateFormattedTitles(false, true, false, false);		        		
+			 		updateFormattedTitles(false, null, true, null, false, null, false);		        		
 	        	} else if (event.isShiftDown() && event.getTextDeltaX() < 0)
 	        	{
+	        		 
 	        		queuemanager.nextTitle(ListEnum.QUEUE);
 			 		updateQueues(false, true, false);
-			 		updateFormattedTitles(false, true, false, false);
+			 		updateFormattedTitles(false, null, true, null, false, null, false);
 	        	}		        	
 	        }
 	    });
 	
 	this.currentsnopes.setOnScroll(new EventHandler<ScrollEvent>() {
+		
         @Override public void handle(ScrollEvent event) {
         	if (event.isShiftDown() && event.getTextDeltaX() > 0)
         	{
+        		nextsleftVBox.setBackground(null);
         		queuemanager.formerTitle(ListEnum.NOPES);
 		 		updateQueues(true, false, false);
-		 		updateFormattedTitles(true, false, false, false);		        		
+		 		updateFormattedTitles(true, null, false, null, false, null, false);		        		
         	} else if (event.isShiftDown() && event.getTextDeltaX() < 0)
         	{
+        		nextsleftVBox.setBackground(null);
         		queuemanager.nextTitle(ListEnum.NOPES);
 		 		updateQueues(true, false, false);
-		 		updateFormattedTitles(true, false, false, false);
+		 		updateFormattedTitles(true, null, false, null, false, null, false);
         	}		        	
         }
     });
@@ -1812,12 +1900,12 @@ public class PickerTab {
         	{
         		queuemanager.formerTitle(ListEnum.PICKS);
 		 		updateQueues(false, false, true);
-		 		updateFormattedTitles(false, false, true, false);		        		
+		 		updateFormattedTitles(false, null, false, null, true, null, false);		        		
         	} else if (event.isShiftDown() && event.getTextDeltaX() < 0)
         	{
         		queuemanager.nextTitle(ListEnum.PICKS);
 		 		updateQueues(false, false, true);
-		 		updateFormattedTitles(false, false, true, false);
+		 		updateFormattedTitles(false, null, false, null, true, null, false);
         	}		        	
         }
     });	
@@ -1825,14 +1913,15 @@ public class PickerTab {
 	
 	
 	private void configureEventsQueue() {
-		 this.currentsqueue.addEventFilter(KeyEvent.KEY_RELEASED, keyEvent -> {					 
+		 this.currentsqueue.addEventFilter(KeyEvent.KEY_RELEASED, keyEvent -> {		
+			 this.nextsleftVBox.setBackground(null);
 			 
 			 	if (keyEvent.getCode() == KeyCode.ENTER && !keyEvent.isAltDown())
 			 	{
 			 		
 			 		if (keyEvent.isShiftDown())
 			 		{			 			
-			 			//queuemanager.saveProgress();
+			 			queuemanager.saveProgress();
 			 			
 			 		} else
 			 		{
@@ -1909,13 +1998,13 @@ public class PickerTab {
 			 	{
 			 		queuemanager.formerTitle(ListEnum.QUEUE);
 			 		updateQueues(false, true, false);
-			 		updateFormattedTitles(false, true, false, true);
+			 		updateFormattedTitles(false, null, true, null, false, null, true);
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.DOWN)
 			 	{
 			 		queuemanager.nextTitle(ListEnum.QUEUE);
 			 		updateQueues(false, true, false);
-			 		updateFormattedTitles(false, true, false, true);
+			 		updateFormattedTitles(false, null, true, null, false, null, true);
 				}		 	
 			 	
 			 	
@@ -1944,7 +2033,7 @@ public class PickerTab {
 			 		this.lastAction = 2;
 			 		
 			 		updateQueues(false, true, true);
-			 		updateFormattedTitles(false, true, true, true);
+			 		updateFormattedTitles(false, null, true, null, true, null, true);
 			 		
 			 		
 			 	}
@@ -1954,7 +2043,7 @@ public class PickerTab {
 			 		this.lastAction = 1;
 			 		
 			 		updateQueues(true, true, false);
-			 		updateFormattedTitles(true, true, false, true);
+			 		updateFormattedTitles(true, null, true, null, false, null, true);
 			 		
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.BACK_SPACE)
@@ -1964,7 +2053,7 @@ public class PickerTab {
 			 			queuemanager.moveTitle(ListEnum.NOPES, false, ListEnum.QUEUE, false, true);
 				 		
 				 		updateQueues(true, true, true);
-				 		updateFormattedTitles(true, true, true, true);	 			
+				 		updateFormattedTitles(true, null, true, null, true, null, true);	 			
 			 		}
 			 		else if  (this.lastAction == 2)
 			 			{			 	
@@ -1972,18 +2061,43 @@ public class PickerTab {
 			 			queuemanager.resetFlag();
 			 		
 				 		updateQueues(true, true, true);
-				 		updateFormattedTitles(true, true, true, true);
+				 		updateFormattedTitles(true, null, true, null, true, null, true);
 			 			
 			 		}
 			 		this.lastAction = 0;
 			 	}		 	
 			 	updateQueueProgress(queuemanager.getProgress());
 				updateProgressText(queuemanager.getProgressText());
-	        });		
-	}
+	        
+		
+		 while (!this.propertyFileHandler.propertyFileModel.get_settings_API_CheckApiAfterImport().equals("true") && queuemanager.titleIsOwnedOrOpenAccess(ListEnum.QUEUE))
+		 {
+			 if ((this.propertyFileHandler.propertyFileModel.get_settings_API_RemoveHoldings().equals("true") && queuemanager.titleIsOwned(ListEnum.QUEUE))
+					 || (this.propertyFileHandler.propertyFileModel.get_settings_API_RemoveOA().equals("true") && queuemanager.titleIsOpenAccess(ListEnum.QUEUE)))
+			 {
+		 		queuemanager.moveTitle(ListEnum.QUEUE, false, ListEnum.NOPES, false, false);
+		 		this.lastAction = 1;
+		 		
+		 		updateQueues(true, true, false);
+		 		updateFormattedTitles(true, null, true, null, false, null, true);
+		 		
+		 		
+		 		
+		 		
+		 		this.nextsleftVBox.setBackground(new Background(new BackgroundFill(Color.rgb(255, 220, 220), new CornerRadii(5), Insets.EMPTY)));
+				
+		 				 		
+		 				 		
+			 }
+		 }
+		 
+		 });	
+		 	
+	}	
 	
 	private void configureEventsPicks() {
 		 this.currentspicks.addEventFilter(KeyEvent.KEY_RELEASED, keyEvent -> {
+			 this.nextsleftVBox.setBackground(null);
 			 
 			if (keyEvent.getCode() == KeyCode.SPACE)
 			{
@@ -2011,7 +2125,7 @@ public class PickerTab {
 			 		
 			 		if (keyEvent.isShiftDown())
 			 		{			 			
-			 			//queuemanager.saveProgress();
+			 			queuemanager.saveProgress();
 			 			
 			 		} else
 			 		{
@@ -2022,14 +2136,14 @@ public class PickerTab {
 			 	{
 			 		queuemanager.formerTitle(ListEnum.PICKS);
 			 		updateQueues(false, false, true);
-			 		updateFormattedTitles(false, false, true, true);
+			 		updateFormattedTitles(false, null, false, null, true, null, true);
 			 		
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.DOWN)
 			 	{
 			 		queuemanager.nextTitle(ListEnum.PICKS);
 			 		updateQueues(false, false, true);
-			 		updateFormattedTitles(false, false, true, true);		 	
+			 		updateFormattedTitles(false, null, false, null, true, null, true);		 	
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.RIGHT)
 			 	{	
@@ -2041,14 +2155,14 @@ public class PickerTab {
 			 		queuemanager.moveTitle(ListEnum.PICKS, false, ListEnum.QUEUE, false, true);
 			 		queuemanager.resetFlag();
 			 		updateQueues(false, true, true);
-			 		updateFormattedTitles(false, true, true, true);					 		
+			 		updateFormattedTitles(false, null, true, null, true, null, true);					 		
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.RIGHT)
 			 	{				 		
 			 		queuemanager.moveTitle(ListEnum.PICKS, false, ListEnum.NOPES, true, false);
 			 		queuemanager.resetFlag();
 			 		updateQueues(true, false, true);
-			 		updateFormattedTitles(true, false, true, true);					 		
+			 		updateFormattedTitles(true, null, false, null, true, null, true);					 		
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.F1)
 			 	{
@@ -2097,13 +2211,15 @@ public class PickerTab {
 	}
 	
 	private void configureEventsNopes() {
-		 this.currentsnopes.addEventFilter(KeyEvent.KEY_RELEASED, keyEvent -> {			 
+		 this.currentsnopes.addEventFilter(KeyEvent.KEY_RELEASED, keyEvent -> {	
+			 
+			 this.nextsleftVBox.setBackground(null);
 			 if (keyEvent.getCode() == KeyCode.ENTER)
 			 	{
 			 		
 			 		if (keyEvent.isShiftDown())
 			 		{			 			
-			 			//queuemanager.saveProgress();
+			 			queuemanager.saveProgress();
 			 			
 			 		} else
 			 		{
@@ -2136,28 +2252,28 @@ public class PickerTab {
 			 	{
 			 		queuemanager.formerTitle(ListEnum.NOPES);			 		
 			 		updateQueues(true, false, false);
-			 		updateFormattedTitles(true, false, false, true);
+			 		updateFormattedTitles(true, null, false, null, false, null, true);
 			 		
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.DOWN)
 			 	{
 			 		queuemanager.nextTitle(ListEnum.NOPES);			 		
 			 		updateQueues(true, false, false);
-			 		updateFormattedTitles(true, false, false, true);	 	
+			 		updateFormattedTitles(true, null, false, null, false, null, true);	 	
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.RIGHT)
 			 	{	
 			 		
 			 		queuemanager.moveTitle(ListEnum.NOPES, false, ListEnum.QUEUE, false, true);			 
 			 		updateQueues(true, true, false);
-			 		updateFormattedTitles(true, true, false, true);			 		
+			 		updateFormattedTitles(true, null, true, null, false, null, true);			 		
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.LEFT)
 			 	{	
 			 		
 			 		queuemanager.moveTitle(ListEnum.NOPES, false, ListEnum.PICKS, true, false);			 
 			 		updateQueues(true, false, true);
-			 		updateFormattedTitles(true, false, true, true);		 		
+			 		updateFormattedTitles(true, null, false, null, true, null, true);		 		
 			 	}
 			 	if (keyEvent.getCode() == KeyCode.LEFT)
 			 	{	

@@ -1,7 +1,7 @@
 package userInterface_reiheAPicker;
 
 import javafx.scene.control.Tab;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 
 public class HistoryTab {
 	

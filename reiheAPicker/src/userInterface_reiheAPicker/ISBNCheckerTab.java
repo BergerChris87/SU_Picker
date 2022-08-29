@@ -26,7 +26,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import logic_reiheAPicker.ApiCallerClass;
 import logic_reiheAPicker.PropertyFileHandler;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 
 public class ISBNCheckerTab {
 	

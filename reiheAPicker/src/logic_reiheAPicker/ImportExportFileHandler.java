@@ -17,23 +17,29 @@ import java.util.List;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 import javafx.stage.Stage;
 
 //handles imports and exports for multipApiCall: Excel/csv/tsv import and Excel export
 public class ImportExportFileHandler {
 	
-	public static List<List<String>> importCsv() throws IOException
+	public static List<List<String>> importCsvOrTsvOrPsf() throws IOException
 	{		
-		return(getFileStringListFromFile(getFile()));
+		File file = getFileOrFolder(true);		
+		return(getFileStringListFromFile(file));
 	}	
+	
+	
 	
 	public static void exportFile(String contentString, String location)
 	{
 		
-		PropertyFileHandler propertyFileHandler = PropertyFileHandler.getInstance();
 		  try{			  
 			  
 			  /*
@@ -42,10 +48,64 @@ public class ImportExportFileHandler {
 				File userSelection = fileChooser.showSaveDialog(new Stage());			  
 			    */			  
 			  
-		FileWriter fstream = new FileWriter(location + getTimeStamp() + "_ReiheA.txt");
+		FileWriter fstream = new FileWriter(location);
 		
         BufferedWriter out = new BufferedWriter(fstream);
         out.write(contentString);
+        //Close the output stream
+        out.close();
+    	}catch (Exception e){//Catch exception if any
+    		System.err.println("Error: " + e.getMessage());
+    	}
+	}
+	
+	public static void saveFileList(List<String> list, String location)
+	{
+		
+		  try{			  
+			  		  
+			  
+		FileWriter fstream = new FileWriter(location);		
+        BufferedWriter out = new BufferedWriter(fstream);  
+              
+        String saveString = "";
+        
+        	for(String column : list)
+        	{
+        		saveString += column;
+        		saveString += "\t";
+        	}    	
+                 
+        
+        out.write(saveString);
+        //Close the output stream
+        out.close();
+    	}catch (Exception e){//Catch exception if any
+    		System.err.println("Error: " + e.getMessage());
+    	}
+	}
+	
+	public static void saveFileListList(List<List<String>> list, String location)
+	{
+		
+		  try{			  
+			  		  
+			  
+		FileWriter fstream = new FileWriter(location);		
+        BufferedWriter out = new BufferedWriter(fstream);  
+              
+        String saveString = "";
+        for (List<String> line : list)
+        {
+        	for(String column : line)
+        	{
+        		saveString += column;
+        		saveString += "\t";
+        	}
+        	saveString += "\n";       	
+        }             
+        
+        out.write(saveString);
         //Close the output stream
         out.close();
     	}catch (Exception e){//Catch exception if any
@@ -59,28 +119,45 @@ public class ImportExportFileHandler {
 		Runtime.getRuntime().exec("explorer " + propertyFileHandler.propertyFileModel.get_settings_ExportFileFolder());
 	}
 	
-	public void openSaveFileFolder() throws IOException
+	public static void openSaveFileFolder() throws IOException
 	{
 		PropertyFileHandler propertyFileHandler = PropertyFileHandler.getInstance();
 		Runtime.getRuntime().exec("explorer " + propertyFileHandler.propertyFileModel.get_settings_SaveFileFolder());
 	}
 	
-	private static String getTimeStamp()
+	public static String getTimeStamp()
 	{
 		SimpleDateFormat formatter= new SimpleDateFormat("yyyyMMdd_HHmmss");
 		String date = formatter.format(System.currentTimeMillis());
 		return date;
 	}	
 	
-	private static File getFile()
+	public static File getFileOrFolder(boolean folderFalseFileTrue)
 	{
 		//text: User input; 
 		File fileChosen = null;
 		
-			javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
-			fileChooser.getExtensionFilters().addAll(new ExtensionFilter("All Files", "*.*"));
-			fileChosen = fileChooser.showOpenDialog(new Stage());
 		
+			
+			if (folderFalseFileTrue)
+			{
+				FileChooser chooser = new javafx.stage.FileChooser();
+				chooser.getExtensionFilters().addAll(new ExtensionFilter("Alle Dateien", "*.*"),
+						new ExtensionFilter("CSV", "*.csv*"), 
+						new ExtensionFilter("TSV", "*.tsv*"), 
+						new ExtensionFilter("Picker Save Files", "*.psv*"));
+				
+				chooser.setTitle("Bitte Zieldatei auswählen");
+				fileChosen = chooser.showOpenDialog(new Stage());
+				
+							
+			} else
+			{
+				DirectoryChooser directoryChooser = new javafx.stage.DirectoryChooser();
+				directoryChooser.setTitle("Bitte Zielordner auswählen");	
+				fileChosen = directoryChooser.showDialog(new Stage());
+			}			
+	
 		
 		if (fileChosen == null)
 		{		
@@ -92,9 +169,39 @@ public class ImportExportFileHandler {
 	}
 	
 	//global import method, will handle csv/tsv
+		//will create and return a list (lines) of a List (columns) 
+		//the subsequent mechanism all handle that specific file.
+	/*
+		public static String getFileStringListFromFile(String fileString) throws IOException
+			{
+					List<List<String>> rows = new ArrayList<List<String>>();		
+					InputStream inputStream = new FileInputStream(new File(fileString));
+														
+						String defaultEncoding = "UTF-8";	
+						String separator = "";
+					
+						BOMInputStream bOMInputStream = new BOMInputStream(inputStream);
+					    ByteOrderMark bom = bOMInputStream.getBOM();
+					    String charsetName = bom == null ? defaultEncoding : bom.getCharsetName();
+					    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new BufferedInputStream(bOMInputStream), charsetName));
+					    String line;
+					    String file = "";
+						while ((line = bufferedReader.readLine()) != null) {	
+							file += line;					
+							  	
+							  }
+						  	inputStream.close();
+						  	bufferedReader.close();						 
+						
+					
+					return file;
+				}
+				*/
+	
+	//global import method, will handle csv/tsv
 	//will create and return a list (lines) of a List (columns) 
 	//the subsequent mechanism all handle that specific file.
-	private static List<List<String>> getFileStringListFromFile(File fileChosen) throws IOException
+	public static List<List<String>> getFileStringListFromFile(File fileChosen) throws IOException
 		{
 				List<List<String>> rows = new ArrayList<List<String>>();		
 				InputStream inputStream = new FileInputStream(fileChosen.getAbsolutePath());

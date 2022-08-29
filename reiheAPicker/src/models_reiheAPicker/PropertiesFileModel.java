@@ -4,7 +4,7 @@ import java.util.Map.Entry;
 
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 
 import java.util.Properties;
 

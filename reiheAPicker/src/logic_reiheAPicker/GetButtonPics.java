@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 
 public class GetButtonPics {
 	
@@ -38,6 +38,17 @@ public class GetButtonPics {
 		{
 			return getImage(Constants.ResFolder+Constants.ResImageNamectrlButton);
 		}		
+	}
+	
+	
+	public static Image getButtonImage_SearchFolderOrFile()
+	{		
+			return getImage(Constants.ResFolder+Constants.ResImageSearchFolderFile);
+	}
+	
+	public static Image getButtonImage_LegalInfo()
+	{		
+			return getImage(Constants.ResFolder+Constants.ResImageNameLegalInfo);
 	}
 	
 	public static Image getButtonImage_arrowDown()
@@ -119,6 +130,11 @@ public class GetButtonPics {
 		return getImage(Constants.ResFolder+Constants.ResImageReiheAPicker);
 	}
 	
+	public static Image getButtonImage_saveButton()
+	{
+		return getImage(Constants.ResFolder+Constants.ResImageSaveButton);
+	}
+	
 	public static Image getButtonImage_isbnChecker()
 	{
 		return getImage(Constants.ResFolder+Constants.ResImageIsbnChecker);
@@ -165,7 +181,7 @@ public class GetButtonPics {
 		}		
 	}
 	
-
+	
 	
 	
 	

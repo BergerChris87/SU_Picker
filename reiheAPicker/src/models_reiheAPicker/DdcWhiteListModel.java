@@ -2,16 +2,16 @@ package models_reiheAPicker;
 
 public class DdcWhiteListModel {
 	
-	private int ddcNumber;
+	private double ddcNumber;
 	private boolean covers0to100;
 	
-	public DdcWhiteListModel(int ddcNumber, boolean covers0to100)
+	public DdcWhiteListModel(double ddcNumber, boolean covers0to100)
 	{
 		this.ddcNumber = ddcNumber;
 		this.covers0to100 = covers0to100;
 	}
 	
-	public int getDdcNumber()
+	public double getDdcNumber()
 	{
 		return this.ddcNumber;
 	}

@@ -1,42 +1,84 @@
 package userInterface_reiheAPicker;
 
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
+
+import org.json.JSONObject;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TabPane.TabClosingPolicy;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import logic_reiheAPicker.GetButtonPics;
 import logic_reiheAPicker.ImportExportFileHandler;
 import logic_reiheAPicker.PropertyFileHandler;
 import models_reiheAPicker.PropertyModel;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 import javafx.scene.layout.VBox;
 
 public class ImportSettingsTab {
 	
 	public Tab importSettingsTab;
+	private Stage primaryStage;
+	
+	public TabPane importSettingsTabSubSettingsTabPane;
+	
+	public Tab generalSettings;
+	public Tab catalogueSettings;
+	public Tab markingsSettings;
+	public Tab apiSettings;
+	private boolean changedFlag = false;
+	
+	public HBox saveButtonHBox;
+	
+	
+	
 	public List<List<String>> titles = null;
+	public boolean isSaveFileLoad = false;
+	public List<String> saveFilePaths = null;
+	public List<String> ColumnNamesFromSaveFile = null;
+	public List<List<String>> nopeTitlesFromSaveFile = null;
+	public List<List<String>> queueTitlesFromSaveFile = null;
+	public List<List<String>> pickTitlesFromSaveFile = null;
+	
 	PropertyFileHandler propertyFilehandler = PropertyFileHandler.getInstance();
-	public GridPane gridpane;	
+	public GridPane gridpaneGeneral;	
+	public GridPane gridpaneCatalogue;	
+	public GridPane gridpaneMarkings;	
+	public GridPane gridpaneApi;	
+	
 	
 	public VBox globalVBox;
     ScrollPane scrollPane = new ScrollPane();
     
-	
-	public Label settingsLabel1;
+    public Label settingsLabel1;
 	public Label settingsLabel2;
 	public Label settingsLabel3;
 	public Label settingsLabel4;
@@ -120,8 +162,10 @@ public class ImportSettingsTab {
 	public CheckBox settingsTextField29_checkbox;
 	
 	public Button saveSettingsButton;
+	public Button searchExportFolderButton;
+	public Button searchSaveFolderButton;
 	
-	//labels für suche; Angabe von Termen damit Überblick leichter
+	//labels fï¿½r suche; Angabe von Termen damit ï¿½berblick leichter
 	public Label searchFieldLabel1;
 	public Label searchFieldLabel2;
 	public Label searchFieldLabel3;
@@ -139,9 +183,12 @@ public class ImportSettingsTab {
 
 	
 	
-	VBox topLineHbox = new VBox();
+	
+	
+	
 		
-	public ImportSettingsTab() throws IOException {
+	public ImportSettingsTab(Stage primaryStage) throws IOException {
+		this.primaryStage = primaryStage;
 		initiateElements();
 		configureElements();
 	}	
@@ -149,8 +196,24 @@ public class ImportSettingsTab {
 	private void initiateElements()
 	{
 		this.importSettingsTab = new Tab(Constants.ImportSettingsTabName);
+		this.generalSettings = new Tab(Constants.GeneralSettingsTabName);
+		this.catalogueSettings = new Tab(Constants.CatalogueSettingsTabName);
+		this.markingsSettings = new Tab(Constants.MarkingsSettingsTabName);
+		this.apiSettings = new Tab(Constants.ApiSettingsTabName);
+	
+		this.importSettingsTabSubSettingsTabPane = new TabPane();
+		this.importSettingsTabSubSettingsTabPane.getTabs().add(this.generalSettings);
+		this.importSettingsTabSubSettingsTabPane.getTabs().add(this.catalogueSettings);
+		this.importSettingsTabSubSettingsTabPane.getTabs().add(this.markingsSettings);
+		this.importSettingsTabSubSettingsTabPane.getTabs().add(this.apiSettings);
 		
-		this.gridpane = new GridPane();
+		
+		this.saveButtonHBox = new HBox();
+		
+		this.gridpaneGeneral = new GridPane();	
+		this.gridpaneCatalogue = new GridPane();	
+		this.gridpaneMarkings = new GridPane();	
+		this.gridpaneApi = new GridPane();	
 		
 		this.globalVBox = new VBox();
 		
@@ -173,12 +236,15 @@ public class ImportSettingsTab {
 		this.settingsTextField6_checkbox.setSelected(Boolean.parseBoolean(propertyFilehandler.propertyFileModel.get_settings_BlockBelletristik()));
 		this.settingsTextField7 = new TextField(propertyFilehandler.propertyFileModel.get_settings_SaveFileFolder());
 		
-		this.settingsTextField1.setMinWidth(500);
-		this.settingsTextField2.setMinWidth(500);
-		this.settingsTextField3.setMinWidth(500);
-		this.settingsTextField4.setMinWidth(500);
-		this.settingsTextField7.setMinWidth(500);
-		this.saveSettingsButton = new Button("Einstellungen übernehmen und speichern!");
+		this.settingsTextField1.setMinWidth(300);
+		this.settingsTextField2.setMinWidth(300);
+		this.settingsTextField3.setMinWidth(300);
+		this.settingsTextField4.setMinWidth(300);
+		this.settingsTextField7.setMinWidth(300);
+		this.saveSettingsButton = new Button("Einstellungen Ã¼bernehmen und speichern!");
+		this.searchExportFolderButton = new Button("");
+		this.searchSaveFolderButton = new Button("");
+		
 
 		this.settingsLabel8 = new Label(Constants.LabelName8);
 		this.settingsLabel9 = new Label(Constants.LabelName9);
@@ -240,6 +306,61 @@ public class ImportSettingsTab {
 		this.settingsTextField29_checkbox = new CheckBox();
 		this.settingsTextField29_checkbox.setSelected(Boolean.parseBoolean(propertyFilehandler.propertyFileModel.get_settings_RemoveJuvenileLiterature()));
 		
+		this.settingsTextField1.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});
+				
+		this.settingsTextField2.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField3.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField4.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField5_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField6_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField7.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		
+		//searchtextfields
+		this.settingsTextField8.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField9.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField10.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField11.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField12.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField13.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField14.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField15.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField16.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField17.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField18.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField19.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+
+		this.settingsTextField20.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField21.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		
+		this.settingsTextField22.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField22b.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField22c.textProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		
+		this.settingsTextField23_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField24_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		
+		this.settingsTextField25_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField26_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});			
+		
+		this.settingsTextField27_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField28_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+		this.settingsTextField29_checkbox.selectedProperty().addListener((observable, oldValue, newValue) -> {setChangedFlag();});		
+			
+	}
+	
+	
+	private void setChangedFlag()
+	{
+		this.changedFlag = true;
+		this.saveButtonHBox.setBackground(new Background(new BackgroundFill(Color.rgb(255, 220, 220), new CornerRadii(5), Insets.EMPTY)));
+		
+		if (!this.saveButtonHBox.getChildren().contains(this.saveButtonHBox))
+				{				
+					this.saveButtonHBox.getChildren().clear();
+					this.saveButtonHBox.setPadding(new Insets(5,5,5,5));
+					this.saveButtonHBox.getChildren().addAll(this.saveSettingsButton, new Label(" Ungespeicherte Einstellungen finden keine Anwendung und gehen nach dem Beenden des Programms verloren!\n Bitte speichern Sie Ihre Einstellungen mit einem Klick auf diesen Button."));
+				}
+		
 	}
 	
 	private String getLabelContentSearchFields(String content)
@@ -300,10 +421,31 @@ public class ImportSettingsTab {
 		searchFieldLabel12.setText(getLabelContentSearchFields(this.settingsTextField19.getText()));
 	}
 	
+	
 	private void configureElements()
 	{
-	
+		this.importSettingsTabSubSettingsTabPane.minWidthProperty().bind(this.primaryStage.widthProperty());
+		this.importSettingsTabSubSettingsTabPane.minHeightProperty().bind(this.primaryStage.heightProperty());
+		
+		
 		this.importSettingsTab.setClosable(false);
+		this.generalSettings.setClosable(false);
+		this.catalogueSettings.setClosable(false);
+		this.markingsSettings.setClosable(false);
+		this.apiSettings.setClosable(false);
+		
+		this.importSettingsTab.setClosable(false);
+		this.generalSettings.setClosable(false);
+		this.catalogueSettings.setClosable(false);
+		this.markingsSettings.setClosable(false);
+		this.apiSettings.setClosable(false);
+
+		this.gridpaneGeneral.setMinHeight(500);
+		this.gridpaneCatalogue.setMinHeight(500);	
+		this.gridpaneMarkings.setMinHeight(500);
+		this.gridpaneApi.setMinHeight(500);
+
+		
 		
 		this.generalSettins.setStyle("-fx-font-weight: bold");
 		this.catalogueSearch.setStyle("-fx-font-weight: bold");
@@ -323,48 +465,108 @@ public class ImportSettingsTab {
 		searchFieldLabel11= new Label(getLabelContentSearchFields(this.settingsTextField18.getText()));
 		searchFieldLabel12= new Label(getLabelContentSearchFields(this.settingsTextField19.getText()));
 		
+	
+		this.gridpaneGeneral = new GridPane();	
+		this.gridpaneCatalogue = new GridPane();	
+		this.gridpaneMarkings = new GridPane();	
+		this.gridpaneApi = new GridPane();	
 		
-		this.gridpane.add(this.generalSettins, 0, 0); this.gridpane.add(this.saveSettingsButton, 3, 0);
-		this.gridpane.add(this.settingsLabel1, 0, 1); 	this.gridpane.add(this.settingsTextField1, 1, 1); this.gridpane.add(new Text("(z.b. 'V:\\ReiheA\\Exports\\')"), 2, 1); 	
-		//this.gridpane.add(this.settingsLabel7, 0, 1);	this.gridpane.add(this.settingsTextField7, 1, 1);
-		//this.gridpane.add(this.settingsLabel2, 0, 2); 	this.gridpane.add(this.settingsTextField2, 1, 2);
-		this.gridpane.add(this.settingsLabel3, 0, 2);	this.gridpane.add(this.settingsTextField3, 1, 2); this.gridpane.add(new Text("Angabe von erlaubten DDCs. (z.b. '200+;340' entspricht 200-300 und 340)"), 2, 2);
-		this.gridpane.add(this.settingsLabel4, 0, 3);	this.gridpane.add(this.settingsTextField4, 1, 3); this.gridpane.add(new Text("Angabe von auszusortierenden Verlagen. (z.b. 'Springer Nature;Wiley')"), 2, 3);
-		this.gridpane.add(this.settingsLabel5, 0, 4);	this.gridpane.add(this.settingsTextField5_checkbox, 1, 4); this.gridpane.add(this.settingsLabel27, 2, 4); this.gridpane.add(this.settingsTextField27_checkbox, 3, 4);
-		this.gridpane.add(this.settingsLabel28, 0, 5); this.gridpane.add(this.settingsTextField28_checkbox, 1, 5); this.gridpane.add(this.settingsLabel29, 2, 5); this.gridpane.add(this.settingsTextField29_checkbox, 3, 5);
-		this.gridpane.add(this.settingsLabel6, 0, 6);	this.gridpane.add(this.settingsTextField6_checkbox, 1, 6);
-		this.gridpane.add(this.catalogueSearch, 0, 7); this.gridpane.add(new Text("Variablen: [{[author]}], [{[title]}], [{[isbn]}], [{[publisher]}]"), 1, 7);
-		this.gridpane.add(this.settingsLabel8, 0, 8);	this.gridpane.add(this.settingsTextField8, 1, 8);	this.gridpane.add(this.searchFieldLabel1, 2, 8);
-		this.gridpane.add(this.settingsLabel9, 0, 9);	this.gridpane.add(this.settingsTextField9, 1, 9);	this.gridpane.add(this.searchFieldLabel2, 2, 9);
-		this.gridpane.add(this.settingsLabel10, 0, 10);	this.gridpane.add(this.settingsTextField10, 1, 10);	this.gridpane.add(this.searchFieldLabel3, 2, 10);
-		this.gridpane.add(this.settingsLabel11, 0, 11);	this.gridpane.add(this.settingsTextField11, 1, 11);	this.gridpane.add(this.searchFieldLabel4, 2, 11);
-		this.gridpane.add(this.settingsLabel12, 0, 12);	this.gridpane.add(this.settingsTextField12, 1, 12);	this.gridpane.add(this.searchFieldLabel5, 2, 12);
-		this.gridpane.add(this.settingsLabel13, 0, 13);	this.gridpane.add(this.settingsTextField13, 1, 13);	this.gridpane.add(this.searchFieldLabel6, 2, 13);
-		this.gridpane.add(this.settingsLabel14, 0, 14);	this.gridpane.add(this.settingsTextField14, 1, 14);	this.gridpane.add(this.searchFieldLabel7, 2, 14);
-		this.gridpane.add(this.settingsLabel15, 0, 15);	this.gridpane.add(this.settingsTextField15, 1, 15);	this.gridpane.add(this.searchFieldLabel8, 2, 15);
-		this.gridpane.add(this.settingsLabel16, 0, 16);	this.gridpane.add(this.settingsTextField16, 1, 16);	this.gridpane.add(this.searchFieldLabel9, 2, 16);
-		this.gridpane.add(this.settingsLabel17, 0, 17);	this.gridpane.add(this.settingsTextField17, 1, 17);	this.gridpane.add(this.searchFieldLabel10, 2, 17);
-		this.gridpane.add(this.settingsLabel18, 0, 18);	this.gridpane.add(this.settingsTextField18, 1, 18);	this.gridpane.add(this.searchFieldLabel11, 2, 18);
-		this.gridpane.add(this.settingsLabel19, 0, 19);	this.gridpane.add(this.settingsTextField19, 1, 19);	this.gridpane.add(this.searchFieldLabel12, 2, 19);	
-		this.gridpane.add(this.markierungseinstellungen , 0, 20);
-		this.gridpane.add(this.settingsLabel20, 0, 21);	this.gridpane.add(this.settingsTextField20, 1, 21);	this.gridpane.add(new Text("z.b. 'Pädagogik;Sozialwissenschaft;Herder;DDC-Sachgruppe:S;Verlagsort:Freiburg'"), 2, 21);
-		this.gridpane.add(this.settingsLabel21, 0, 22);	this.gridpane.add(this.settingsTextField21, 1, 22);	this.gridpane.add(new Text("z.b. 'Scientology;Grin-Verlag;DDC-Sachgruppe:B;Autor:Guttenberg;Auflage:Unver'"), 2, 22);	
-		this.gridpane.add(this.apisettings , 0, 23);
-		this.gridpane.add(this.settingsLabel22, 0, 24);	this.gridpane.add(this.settingsTextField22, 1, 24);	this.gridpane.add(new HBox(this.settingsLabel22b, new Label(" "), this.settingsTextField22b,new Label(" "), this.settingsLabel22c,new Label(" "), this.settingsTextField22c),  2, 24);
-		this.gridpane.add(this.settingsLabel23, 0, 25);	this.gridpane.add(this.settingsTextField23_checkbox, 1, 25);	this.gridpane.add(new Text("Sämtliche Datensätze werden beim Laden geprüft."), 2, 25);	
-		this.gridpane.add(this.settingsLabel24, 0, 26);	this.gridpane.add(this.settingsTextField24_checkbox, 1, 26);	this.gridpane.add(new Text("Erfordert Option 'Bestand nach Import prüfen'"), 2, 26);
-		this.gridpane.add(this.settingsLabel25, 0, 27);	this.gridpane.add(this.settingsTextField25_checkbox, 1, 27);	
-		this.gridpane.add(this.settingsLabel26, 0, 28);	this.gridpane.add(this.settingsTextField26_checkbox, 1, 28);	this.gridpane.add(new Text("Erfordert Option 'Bestand nach Import prüfen'"), 2, 28);
+		Image saveButtonImage = GetButtonPics.getButtonImage_saveButton();
+		Image searchFileOrFolderImage = GetButtonPics.getButtonImage_SearchFolderOrFile();
 		
-																																																		
+		if (searchFileOrFolderImage != null)
+	     {  	
+		
+	    	this.searchSaveFolderButton = new Button("");
+	    	this.searchExportFolderButton.setText(null);
+	    	ImageView img = GetButtonPics.turnPicIntoImageView(searchFileOrFolderImage);
+	    	img.setFitWidth(22);
+	    	img.setFitHeight(22);
+		    this.searchExportFolderButton.setGraphic(img);
+		    this.searchExportFolderButton.setPadding(new Insets(1,1,1,1));   
+	        this.searchSaveFolderButton.setText(null);
+	        img = GetButtonPics.turnPicIntoImageView(searchFileOrFolderImage);
+	    	img.setFitWidth(22);
+	    	img.setFitHeight(22);
+	        this.searchSaveFolderButton.setGraphic(img);
+	        this.searchSaveFolderButton.setPadding(new Insets(1,1,1,1)); 
+	        
+	      
+	      }
+		 
+        if (saveButtonImage != null)
+        {  	    		
+        	
+        this.saveSettingsButton.setText(null);
+        this.saveSettingsButton.setGraphic(GetButtonPics.turnPicIntoImageView(saveButtonImage));
+        this.saveSettingsButton.setPadding(new Insets(5,5,5,5));        
+        }
+        this.saveButtonHBox.setPadding(new Insets(5,5,5,5));
+		
+	
+        
+		this.gridpaneGeneral.add(this.generalSettins, 0, 0); 
+		this.gridpaneGeneral.add(this.settingsLabel1, 0, 1); 	this.gridpaneGeneral.add(this.settingsTextField1, 1, 1); this.gridpaneGeneral.add(this.searchExportFolderButton, 2, 1); 	
+		this.gridpaneGeneral.add(this.settingsLabel7, 0, 2); 	this.gridpaneGeneral.add(this.settingsTextField7, 1, 2); this.gridpaneGeneral.add(this.searchSaveFolderButton, 2, 2); 	
+		
+		//this.gridpaneGeneral.add(this.settingsLabel7, 0, 1);	this.gridpaneGeneral.add(this.settingsTextField7, 1, 1);
+		//this.gridpaneGeneral.add(this.settingsLabel2, 0, 2); 	this.gridpaneGeneral.add(this.settingsTextField2, 1, 2);
+		this.gridpaneGeneral.add(this.settingsLabel3, 0, 3);	this.gridpaneGeneral.add(this.settingsTextField3, 1, 3); this.gridpaneGeneral.add(new Text("Angabe von erlaubten DDCs. (z.b. '200+;350+;440' entspricht 200-299.999, 350-399.999 und 440)"), 2, 3);
+		this.gridpaneGeneral.add(this.settingsLabel4, 0, 4);	this.gridpaneGeneral.add(this.settingsTextField4, 1, 4); this.gridpaneGeneral.add(new Text("Angabe von auszusortierenden Verlagen. (z.b. 'Springer Nature;Wiley')"), 2, 4);
+		this.gridpaneGeneral.add(this.settingsLabel5, 0, 5);	this.gridpaneGeneral.add(this.settingsTextField5_checkbox, 1, 5); 
+		this.gridpaneGeneral.add(this.settingsLabel27, 0, 6); this.gridpaneGeneral.add(this.settingsTextField27_checkbox, 1, 6);
+		this.gridpaneGeneral.add(this.settingsLabel28, 0, 7); this.gridpaneGeneral.add(this.settingsTextField28_checkbox, 1, 7); 
+		this.gridpaneGeneral.add(this.settingsLabel29, 0, 8); this.gridpaneGeneral.add(this.settingsTextField29_checkbox, 1, 8);
+		this.gridpaneGeneral.add(this.settingsLabel6, 0, 9);	this.gridpaneGeneral.add(this.settingsTextField6_checkbox, 1, 9);
+		
+		this.gridpaneCatalogue.add(this.catalogueSearch, 0, 0); this.gridpaneCatalogue.add(new Text("Variablen: [{[author]}], [{[title]}], [{[isbn]}], [{[publisher]}]"), 1, 7);
+		this.gridpaneCatalogue.add(this.settingsLabel8, 0, 1);	this.gridpaneCatalogue.add(this.settingsTextField8, 1, 1);	this.gridpaneCatalogue.add(this.searchFieldLabel1, 2, 1);
+		this.gridpaneCatalogue.add(this.settingsLabel9, 0, 2);	this.gridpaneCatalogue.add(this.settingsTextField9, 1, 2);	this.gridpaneCatalogue.add(this.searchFieldLabel2, 2, 2);
+		this.gridpaneCatalogue.add(this.settingsLabel10, 0, 3);	this.gridpaneCatalogue.add(this.settingsTextField10, 1, 3);	this.gridpaneCatalogue.add(this.searchFieldLabel3, 2, 3);
+		this.gridpaneCatalogue.add(this.settingsLabel11, 0, 4);	this.gridpaneCatalogue.add(this.settingsTextField11, 1, 4);	this.gridpaneCatalogue.add(this.searchFieldLabel4, 2, 4);
+		this.gridpaneCatalogue.add(this.settingsLabel12, 0, 5);	this.gridpaneCatalogue.add(this.settingsTextField12, 1, 5);	this.gridpaneCatalogue.add(this.searchFieldLabel5, 2, 5);
+		this.gridpaneCatalogue.add(this.settingsLabel13, 0, 6);	this.gridpaneCatalogue.add(this.settingsTextField13, 1, 6);	this.gridpaneCatalogue.add(this.searchFieldLabel6, 2, 6);
+		this.gridpaneCatalogue.add(this.settingsLabel14, 0, 7);	this.gridpaneCatalogue.add(this.settingsTextField14, 1, 7);	this.gridpaneCatalogue.add(this.searchFieldLabel7, 2, 7);
+		this.gridpaneCatalogue.add(this.settingsLabel15, 0, 8);	this.gridpaneCatalogue.add(this.settingsTextField15, 1, 8);	this.gridpaneCatalogue.add(this.searchFieldLabel8, 2, 8);
+		this.gridpaneCatalogue.add(this.settingsLabel16, 0, 9);	this.gridpaneCatalogue.add(this.settingsTextField16, 1, 9);	this.gridpaneCatalogue.add(this.searchFieldLabel9, 2, 9);
+		this.gridpaneCatalogue.add(this.settingsLabel17, 0, 10);	this.gridpaneCatalogue.add(this.settingsTextField17, 1, 10);	this.gridpaneCatalogue.add(this.searchFieldLabel10, 2, 10);
+		this.gridpaneCatalogue.add(this.settingsLabel18, 0, 11);	this.gridpaneCatalogue.add(this.settingsTextField18, 1, 11);	this.gridpaneCatalogue.add(this.searchFieldLabel11, 2, 11);
+		this.gridpaneCatalogue.add(this.settingsLabel19, 0, 12);	this.gridpaneCatalogue.add(this.settingsTextField19, 1, 12);	this.gridpaneCatalogue.add(this.searchFieldLabel12, 2, 12);	
+		
+		this.gridpaneMarkings.add(this.markierungseinstellungen , 0, 0);
+		this.gridpaneMarkings.add(this.settingsLabel20, 0, 1);	this.gridpaneMarkings.add(this.settingsTextField20, 1, 1);	this.gridpaneMarkings.add(new Text("z.b. 'PÃ¤dagogik;Sozialwissenschaft;Herder;DDC-Sachgruppe:S;Verlagsort:Freiburg'"), 2, 1);
+		this.gridpaneMarkings.add(this.settingsLabel21, 0, 2);	this.gridpaneMarkings.add(this.settingsTextField21, 1, 2);	this.gridpaneMarkings.add(new Text("z.b. 'Scientology;Grin-Verlag;DDC-Sachgruppe:B;Autor:Guttenberg;Auflage:Unver'"), 2, 2);	
+		this.gridpaneMarkings.add(this.settingsLabel25, 0, 3);	this.gridpaneMarkings.add(this.settingsTextField25_checkbox, 1, 3);
+		
+		
+		this.gridpaneApi.add(this.apisettings , 0, 0);
+		this.gridpaneApi.add(this.settingsLabel22, 0, 1);	this.gridpaneApi.add(this.settingsTextField22, 1, 1);	this.gridpaneApi.add(new HBox(this.settingsLabel22b, new Label(" "), this.settingsTextField22b,new Label(" "), this.settingsLabel22c,new Label(" "), this.settingsTextField22c),  2, 1);
+		this.gridpaneApi.add(this.settingsLabel23, 0, 2);	this.gridpaneApi.add(this.settingsTextField23_checkbox, 1, 2);	this.gridpaneApi.add(new Text("SÃ¤mtliche DatensÃ¤tze werden bereits beim Laden auf Bestand und OA-Status geprÃ¼ft und ggf. aussortiert. (Ladezeit ca. 0,5 Sekunden je Titel)"), 2, 2);	
+		this.gridpaneApi.add(this.settingsLabel24, 0, 3);	this.gridpaneApi.add(this.settingsTextField24_checkbox, 1, 3); 	
+		this.gridpaneApi.add(this.settingsLabel26, 0, 4);	this.gridpaneApi.add(this.settingsTextField26_checkbox, 1, 4);
+			
+	
+		
+																																																
 																											
-		this.gridpane.setHgap(10);
-		this.gridpane.setVgap(10);
-		this.gridpane.setPadding(new Insets(10,10,10,10));
+		this.gridpaneGeneral.setHgap(10);
+		this.gridpaneGeneral.setVgap(10);
+		this.gridpaneGeneral.setPadding(new Insets(10,10,10,10));
+		
+		this.gridpaneCatalogue.setHgap(10);
+		this.gridpaneCatalogue.setVgap(10);
+		this.gridpaneCatalogue.setPadding(new Insets(10,10,10,10));
+		
+		this.gridpaneMarkings.setHgap(10);
+		this.gridpaneMarkings.setVgap(10);
+		this.gridpaneMarkings.setPadding(new Insets(10,10,10,10));
+		
+		this.gridpaneApi.setHgap(10);
+		this.gridpaneApi.setVgap(10);
+		this.gridpaneApi.setPadding(new Insets(10,10,10,10));
 		
 		saveSettingsButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
-            	
+            @Override public void handle(ActionEvent e) {              	
             	try {            		
 					updateAndSaveProperties();
 					updateSearchFieldLabels();
@@ -372,6 +574,20 @@ public class ImportSettingsTab {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
+ 
+            }
+        });
+		
+		searchSaveFolderButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {              	
+            	getFolderName(false);
+ 
+            }
+        });
+		
+		searchExportFolderButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {              	
+            	getFolderName(true);
  
             }
         });
@@ -385,7 +601,17 @@ public class ImportSettingsTab {
 		updateTextField24();
 		updateTextField26();
 		
-		this.globalVBox.getChildren().addAll(this.topLineHbox, this.gridpane);
+		
+		
+		this.generalSettings.setContent(this.gridpaneGeneral);
+		this.catalogueSettings.setContent(this.gridpaneCatalogue);
+		this.markingsSettings.setContent(this.gridpaneMarkings);
+		this.apiSettings.setContent(this.gridpaneApi);
+		
+		
+		
+		
+		this.globalVBox.getChildren().addAll(this.saveButtonHBox, this.importSettingsTabSubSettingsTabPane);
 		this.scrollPane.setContent(this.globalVBox);
 		this.importSettingsTab.setContent(this.scrollPane);
 		
@@ -393,6 +619,7 @@ public class ImportSettingsTab {
 	
 	private void updateTextField24()
 	{
+		/*
 		if (this.settingsTextField23_checkbox.isSelected())
 		{
 			this.settingsTextField24_checkbox.setVisible(true);				
@@ -400,10 +627,12 @@ public class ImportSettingsTab {
 		{
 			this.settingsTextField24_checkbox.setVisible(false);
 		}
+		*/		
 	}
 	
 	private void updateTextField26()
 	{
+		/*
 		if (this.settingsTextField23_checkbox.isSelected())
 		{
 			this.settingsTextField26_checkbox.setVisible(true);				
@@ -411,13 +640,20 @@ public class ImportSettingsTab {
 		{
 			this.settingsTextField26_checkbox.setVisible(false);
 		}
+		*/
 	}
 	
 	private void updateAndSaveProperties() throws IOException
 	{
+		
+		
 		if(!this.settingsTextField1.getText().substring(this.settingsTextField1.getText().length() - 1).equals("\\"))
 		{
 			this.settingsTextField1.setText(this.settingsTextField1.getText() + "\\");
+		}
+		if(!this.settingsTextField7.getText().substring(this.settingsTextField7.getText().length() - 1).equals("\\"))
+		{
+			this.settingsTextField7.setText(this.settingsTextField7.getText() + "\\");
 		}
 		if(this.settingsTextField3.getText().contains(" "))
 		{
@@ -452,9 +688,15 @@ public class ImportSettingsTab {
 				);		
 		
 		this.propertyFilehandler.setConfigDetail();			
+		this.changedFlag = false;
+		this.saveButtonHBox.setBackground(null);
+		this.saveButtonHBox.getChildren().clear();
 		
 
+
 	}
+	
+	
 	
 	public String booleanToString(CheckBox checkbox)
 	{
@@ -465,10 +707,41 @@ public class ImportSettingsTab {
 		return "false";
 	}
 	
+	private void getFolderName(boolean tf1truetf7false)
+	{		
+		if (tf1truetf7false)
+		{
+			this.settingsTextField1.setText(ImportExportFileHandler.getFileOrFolder(false).getAbsolutePath());
+		} else
+		{
+			this.settingsTextField7.setText(ImportExportFileHandler.getFileOrFolder(false).getAbsolutePath());
+		}
+		 
+	}
 	
 	public void openFileAndLoad() throws IOException
 	{
-		this.titles = ImportExportFileHandler.importCsv();
+		this.titles = ImportExportFileHandler.importCsvOrTsvOrPsf();
+		
+		// if you see this, know that I am fully aware that I have sinned.
+		// dont judge. (what could go wrong?)		
+		if (this.titles.toString().contains("[Picker Save File]"))
+		{
+			
+			this.isSaveFileLoad = true;
+			this.saveFilePaths = this.titles.get(0);
+			
+			String filename_c = this.titles.get(1).get(0);
+			String filename_n = this.titles.get(2).get(0);
+			String filename_q = this.titles.get(3).get(0);
+			String filename_p = this.titles.get(4).get(0);
+				
+			this.ColumnNamesFromSaveFile = ImportExportFileHandler.getFileStringListFromFile(new File(filename_c)).get(0);			
+			this.nopeTitlesFromSaveFile = ImportExportFileHandler.getFileStringListFromFile(new File(filename_n));
+			this.queueTitlesFromSaveFile = ImportExportFileHandler.getFileStringListFromFile(new File(filename_q));
+			this.pickTitlesFromSaveFile = ImportExportFileHandler.getFileStringListFromFile(new File(filename_p));				
+						
+		}
 	}
 
 

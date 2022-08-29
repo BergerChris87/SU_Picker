@@ -1,7 +1,9 @@
-package var_reiheAPicker.copy;
+package var_reiheAPicker;
 
 import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
 import javafx.scene.text.Text;
+import var_reiheAPicker.Constants;
 
 public class Constants {	
 
@@ -10,8 +12,13 @@ public class Constants {
 	public static int holdingsIndex = 2;
 	public static String emptyField = "-";
 	
-	public static String ProgramName = "Sisyphos unchained";
+	public static String ProgramName = "Reihe-A-Picker";
 	public static String ChooserTabName = "Titelauswahl";
+	public static String GeneralSettingsTabName = "Allgemeine Einstellungen";
+	public static String CatalogueSettingsTabName = "Katalogeinstellungen";
+	public static String MarkingsSettingsTabName = "Markierungseinstellungen";
+	public static String ApiSettingsTabName = "API-Einstellungen";			
+			
 	public static String HistoryTabName = "Historie";
 	public static String ImportSettingsTabName = "Einstellungen";
 	public static String isbnCheckerTabName = "ISBN Checker";
@@ -54,7 +61,7 @@ public class Constants {
 	public static String LabelName4 = "Publisher Blacklist: ";
 	public static String LabelName5 = "Duplikate entfernen? (Anhand ISBN)";
 	public static String LabelName6 = "Belletristik entfernen? (DDC: B)";
-	public static String LabelName7 = "";
+	public static String LabelName7 = "Savefile Zielordner: ";
 	public static String LabelName8  = "Suche (F1)";
 	public static String LabelName9  = "Suche (F2)";
 	public static String LabelName10 = "Suche (F3)";
@@ -87,6 +94,8 @@ public class Constants {
 		
 	public static String ResFolder = "res\\";	
 	public static boolean ShowPicsInsteadOfButton = false;
+	
+	public static String ResImageNameLegalInfo = "legal-info.png";
 	public static String ResImageNamectrlPic = "remote-control.png";
 	public static String ResImageNamectrlButton = "ctrl-control-button.png";
 	public static String ResImageNameshiftPic = "transmission.png";
@@ -107,13 +116,15 @@ public class Constants {
 	public static String ResImageNameBackspace = "backspace.png";
 	public static String ResImageVerticalLine = "vertical-line.png";
 	public static String ResImageclosedEye = "closed-eye.png";
-	public static String ResImageTooltipIcon = "rocks-falling-sign.png";
+	public static String ResImageTooltipIcon = "Reihe-A-Logo.png";
 	public static String ResImageQuestionMark = "question-mark-round-line.png";
 	public static String ResImageAlt = "alt-button.png";
 	public static String ResImageViviButton = "logo_square.png";
 	public static String ResImageSnakeButton = "snake.png";
 	public static String ResImageIsbnChecker = "interesting-facts.png";
 	public static String ResImageReiheAPicker = "rocks-falling-sign.png";
+	public static String ResImageSaveButton = "save-all-files-icon.png";
+	public static String ResImageSearchFolderFile = "folder-search-icon.png";
 	
 	
 	public static Text ShortCutDescription_inhaltsverzeichnis = new Text(" Inhaltsverzeichnis ");
@@ -122,6 +133,7 @@ public class Constants {
 	public static Text ShortCutDescription_auflagentausch = new Text(" Auflage tauschen ");
 	public static Text ShortCutDescription_sonderHinweis = new Text(" Eigener Hinweis ");
 	public static Text ShortCutDescription_export = new Text(" Titel Exportieren ");
+	public static Text ShortCutDescription_save = new Text(" Fortschritt speichern ");
 	public static Text ShortCutDescription_titelsuche = new Text(" Siehe Einstellungen ");
 	public static Text ShortCutDescription_titelautorsuche = new Text(" Titel/Autor suchen ");
 	public static Text ShortCutDescription_verlagsuche = new Text(" Verlag suchen ");

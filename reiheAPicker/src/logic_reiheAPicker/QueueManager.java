@@ -1,5 +1,6 @@
 package logic_reiheAPicker;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -8,12 +9,14 @@ import java.util.List;
 
 import javafx.scene.Scene;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import models_reiheAPicker.DdcWhiteListModel;
 import models_reiheAPicker.ListEnum;
 import models_reiheAPicker.PropertyModel;
-import var_reiheAPicker.copy.Constants;
+import var_reiheAPicker.Constants;
 
 public class QueueManager {
 	
@@ -41,6 +44,122 @@ public class QueueManager {
 	
 	public List<String> ColumnNames;
 	public double initialSizeQueueTitles = -1;
+	
+	public int getISBNIndex()
+	{
+		setIsbnIndex();
+		return this.isbnIndex;
+	}
+	
+	public void setNopeIteratorToLast()
+	{
+		this.nopeTitlescurrentIteration = this.nopeTitles.size() - 1;
+	}
+	
+	public void saveProgress()
+	{
+		String dateTimeFileString = ImportExportFileHandler.getTimeStamp();
+		
+		if (!this.propertyFileHandler.propertyFileModel.get_settings_SaveFileFolder().isBlank())
+		{
+			new File(this.propertyFileHandler.propertyFileModel.get_settings_SaveFileFolder()
+					+ dateTimeFileString).mkdirs();
+			
+			
+			
+			String cFile = propertyFileHandler.propertyFileModel.get_settings_SaveFileFolder()
+					+ dateTimeFileString + "\\" + "c" + ".txt";
+			String nFile = propertyFileHandler.propertyFileModel.get_settings_SaveFileFolder()
+					+ dateTimeFileString + "\\" + "n" + ".txt";
+			String qFile = this.propertyFileHandler.propertyFileModel.get_settings_SaveFileFolder()
+					+ dateTimeFileString + "\\" + "q" + ".txt";
+			String pFile = this.propertyFileHandler.propertyFileModel.get_settings_SaveFileFolder()
+					+ dateTimeFileString + "\\" + "p" + ".txt";
+			String saveLoadFile = this.propertyFileHandler.propertyFileModel.get_settings_SaveFileFolder()
+					+ dateTimeFileString + "\\" + dateTimeFileString + ".psf";
+			
+			String saveLoadFileContent = "[Picker Save File]" + "\n" + cFile + "\n" + nFile + "\n" + qFile  + "\n" + pFile;
+			
+			
+			
+			
+			
+			
+			ImportExportFileHandler.exportFile(saveLoadFileContent, saveLoadFile);
+			
+			if (this.ColumnNames != null && this.ColumnNames.size() > 0)
+			{
+				ImportExportFileHandler.saveFileList(this.ColumnNames, cFile);
+			} else
+			{
+				ImportExportFileHandler.saveFileList(null, cFile);
+			}
+			
+			if (this.nopeTitles != null && this.nopeTitles.size() > 0)
+			{
+				ImportExportFileHandler.saveFileListList(this.nopeTitles, nFile);
+			} else
+			{
+				ImportExportFileHandler.saveFileListList(null, nFile);
+			}
+			
+			if (this.queueTitles != null && this.queueTitles.size() > 0)
+			{
+				ImportExportFileHandler.saveFileListList(this.queueTitles, qFile);
+			} else
+			{
+				ImportExportFileHandler.saveFileListList(null, qFile);
+			}
+			
+			if (this.pickTitles != null && this.pickTitles.size() > 0)
+			{
+				ImportExportFileHandler.saveFileListList(this.pickTitles, pFile);
+			} else
+			{
+				ImportExportFileHandler.saveFileListList(null, pFile);
+			}
+			try {
+				ImportExportFileHandler.openSaveFileFolder();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
+	}
+	
+	
+	public QueueManager(List<String> columnNames, List<List<String>> ntitles, List<List<String>> qtitles, List<List<String>> ptitles)
+	{
+		this.apiCaller = new ApiCallerClass();
+		this.ColumnNames = columnNames;
+		this.nopeTitles = ntitles;
+		this.queueTitles = qtitles;
+		this.pickTitles = ptitles;
+		double titleCount = 0;
+		if (this.nopeTitles != null)
+		{
+			titleCount += this.nopeTitles.size();
+		}
+		if (this.queueTitles != null)
+		{
+			titleCount += this.queueTitles.size();
+		}
+		if (this.pickTitles != null)
+		{
+			titleCount += this.pickTitles.size();
+		}
+		this.initialSizeQueueTitles = titleCount;		
+		getIndizes();
+	}
+	
+	private void getIndizes()
+	{
+		setDdcIndex();
+		setIsbnIndex();
+		setPublisherIndex();
+		setAuthorIndex();
+		setContentsIndex();		
+	}
 	
 	
 	public QueueManager(List<List<String>> titles, ProgressIndicator progressIndicator)
@@ -97,6 +216,32 @@ public class QueueManager {
 		if (title != null)
 		{
 			if (title.get(Constants.holdingsIndex).contains(Constants.bestandvorhanden) || title.get(Constants.holdingsIndex).contains(Constants.oaMarker))
+			{
+				return true;
+			}			
+		}
+		return false;
+	}
+	
+	public boolean titleIsOwned(ListEnum listEnum)
+	{
+		List<String> title = getCurrentTitle(listEnum);
+		if (title != null)
+		{
+			if (title.get(Constants.holdingsIndex).contains(Constants.bestandvorhanden))
+			{
+				return true;
+			}			
+		}
+		return false;
+	}
+	
+	public boolean titleIsOpenAccess(ListEnum listEnum)
+	{
+		List<String> title = getCurrentTitle(listEnum);
+		if (title != null)
+		{
+			if (title.get(Constants.holdingsIndex).contains(Constants.oaMarker))
 			{
 				return true;
 			}			
@@ -246,11 +391,29 @@ public class QueueManager {
 		}			
 	}
 	
+	public void initIterators()
+	{
+		if (this.nopeTitlescurrentIteration == -1 && this.nopeTitles != null && this.nopeTitles.size() > 0)
+		{
+			this.nopeTitlescurrentIteration = this.nopeTitles.size()-1;
+		}
+		if (this.queueTitlescurrentIteration == -1 && this.queueTitles != null && this.queueTitles.size() > 0)
+		{
+			this.nopeTitlescurrentIteration = this.queueTitles.size()-1;
+		}
+		if (this.pickTitlescurrentIteration == -1 && this.pickTitles != null && this.pickTitles.size() > 0)
+		{
+			this.nopeTitlescurrentIteration = this.pickTitles.size()-1;
+		}
+	}
+	
 	public List<List<String>> get10Formers(ListEnum listEnum)
 	{
+		initIterators();
+		
 		List<List<String>> titles = getList(listEnum);
 		int iteration = getIterator(listEnum);
-		
+				
 		if (iteration >= 10)
 		{
 			return titles.subList(iteration - 10, iteration);
@@ -345,13 +508,17 @@ public class QueueManager {
 				{
 					for (String publisher : this.publisherBlacklist)
 					{
+						
 						if (this.queueTitles.get(counter).get(this.publisherIndex).contains(publisher))
 						{
 							System.out.println("removed publisher: " + publisher + " in: " + this.queueTitles.get(counter).get(0));
-							this.queueTitles.get(counter).set(1, "Publisher unerw¸nscht!");
+							this.queueTitles.get(counter).set(1, "Publisher unerw√ºnscht!");
 							this.nopeTitles.add(this.queueTitles.get(counter));
 							this.queueTitles.remove(this.queueTitles.get(counter));
-							counter --;
+							if (counter > 0)
+							{
+								counter --;	
+							}						
 						}
 					}
 				}							
@@ -443,15 +610,25 @@ public class QueueManager {
 						for (DdcWhiteListModel ddcWhitelistModel: this.ddcWhitelistModels)
 						{
 							//tryparse, skip if it cant.
+							
+							double ddcNumber = tryParseDouble(currentddc);
 						
 							//if current ddc whitelist matches
 							if (ddcWhitelistModel.getCovers0to100()  && discard)
-							{							
-								if (tryParseInt(currentddc) >= ddcWhitelistModel.getDdcNumber() && tryParseInt(currentddc) < ddcWhitelistModel.getDdcNumber() +100)
+							{						
+								// case: ddc 450 +
+								// 450/100 = 4,5 (int) -> = 4;
+								// 4+1 = 5;
+								// 5 * 100 = 500
+								// ergo: DDC of titel must be smaller than 500 (= [450-500[)
+								int ddcMaxRange = (((int) (ddcWhitelistModel.getDdcNumber() / 100)) + 1) * 100;
+								
+								
+								if (ddcNumber >= ddcWhitelistModel.getDdcNumber() && ddcNumber < ddcMaxRange)
 								{								
 									discard = false;
 								}
-							} else	if (tryParseInt(currentddc) == ddcWhitelistModel.getDdcNumber()  && discard)
+							} else	if (ddcNumber == ddcWhitelistModel.getDdcNumber()  && discard)
 								{								
 									discard = false;
 								}						
@@ -473,16 +650,10 @@ public class QueueManager {
 		}
 	}
 	
-	public int tryParseInt(String value) {
+	public double tryParseDouble(String value) {
 	    try {
 	    	
-	    	if (value.contains("."))
-	    	{
-	    		return Integer.parseInt(value.substring(0, value.indexOf('.')));
-	    	} else
-	    	{
-	    		return Integer.parseInt(value);
-	    	}
+	    		return Double.parseDouble(value);	    	
 	        
 	    } catch (NumberFormatException e) {
 	    	if (!value.equals("B") && !value.equals("K") && !value.equals("S"))
@@ -531,22 +702,24 @@ public class QueueManager {
 	
 	private void initiateDdcWhitelist()
 	{		
+		this.setDdcIndex();
 					
 		String[] ddcWhitelistSettings = this.propertyFileHandler.propertyFileModel.get_settings_DDCWhitelist().split(";");
 		
 		this.ddcWhitelistModels = new ArrayList<DdcWhiteListModel>();
 		
+		
 		for (String ddcWhitelistSetting: ddcWhitelistSettings)
 		{	
-			{
+			{ 
 				if (ddcWhitelistSetting.contains("+"))
 				{
 					ddcWhitelistSetting = ddcWhitelistSetting.replace("+", "");
-					this.ddcWhitelistModels.add(new DdcWhiteListModel(Integer.parseInt(ddcWhitelistSetting), true));
+					this.ddcWhitelistModels.add(new DdcWhiteListModel(Double.parseDouble(ddcWhitelistSetting), true));
 				}
 				else
 				{							
-					this.ddcWhitelistModels.add(new DdcWhiteListModel(Integer.parseInt(ddcWhitelistSetting), false));
+					this.ddcWhitelistModels.add(new DdcWhiteListModel(Double.parseDouble(ddcWhitelistSetting), false));
 					
 				}	
 			}			
@@ -557,6 +730,8 @@ public class QueueManager {
 	{
 		try {
 			callApiOnCurrentData(listEnum);
+			
+			
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -817,7 +992,7 @@ public class QueueManager {
 			link = this.propertyFileHandler.propertyFileModel.get_settings_f4searchCtrl();
 			break;
 		default:
-			System.out.println("Keine Suchmethode gew‰hlt");
+			System.out.println("Keine Suchmethode gew√§hlt");
 			break;
 		}	
 		return link;
@@ -843,7 +1018,7 @@ public class QueueManager {
 			authorContentRaw = authorContentRaw.replace("(Hg.)", "");		
 			authorContentRaw = authorContentRaw.replace(",", "");
 			authorContentRaw = authorContentRaw.replace(";", "");
-			authorContentRaw = authorContentRaw.replace("erz‰hlt und illustriert von", "");
+			authorContentRaw = authorContentRaw.replace("erz√§hlt und illustriert von", "");
 	 			
 			String[] authorContent = authorContentRaw.split(" ");
 			String authorSearchTerm = "";
@@ -876,7 +1051,7 @@ public class QueueManager {
 		
 		if (link.contains("[{[publisher]}]"))
 		{
-			
+			setPublisherIndex();	
 			link = link.replace("[{[publisher]}]", getCurrentTitle(listEnum).get(this.publisherIndex));			
 		}		
 		return link;
